@@ -38,6 +38,30 @@ V3 (smaller HFiles): V2 + smaller HFiles by removing duplicate information in a 
 V2's row reconstruction and zero-copy parts can be applied to Region Server to make regular HBase Get and Scan operations faster.
 
 
+[ Source Tour ]
+
+Source first you want first to read. 
+
+V1: 
+test/hfileinput/HFileKVScannerSpecs.scala (the main test program)
+src/hfileinput/v1/HFileResultScanner.scala
+src/hfileinput/v1/HFileKeyValueScanner.scala
+
+
+V2: 
+test/hfileinput/HFileKVRowScannerSpecs.scala (the main test program)
+src/org/apache/hadoop/hbase/io/hfile/HFileRowScanner.java
+src/hfileinput/v2/KeyValue2.java
+src/hfileinput/v2/KeyValueRowMergeScanner.java
+src/hfileinput/v2/KeyValueHashSet.java
+
+
+V3 (almost identical to V2 so check V2 first): 
+test/hfileinput/HFileKVRowScannerSpecsV3.scala (the main test program)
+src/org/apache/hadoop/hbase/io/hfile/HFileRowScanner3.java
+src/hfileinput/v3/KeyValue3.java
+
+
 [ Requirements ] 
 
 Requirements to build the project:
