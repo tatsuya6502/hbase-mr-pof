@@ -8,7 +8,7 @@ public interface KeyValueRowScanner {
 
     int getMaxVersions();
 
-//    NavigableSet<byte[]> getColumnsToIncludes();
+//    NavigableSet<byte[]> getColumnsToInclude();
 
     ImmutableBytesWritable peekRowID();
 

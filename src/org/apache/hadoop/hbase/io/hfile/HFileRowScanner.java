@@ -48,7 +48,7 @@ public class HFileRowScanner implements KeyValueRowScanner {
         return 1;
     }
 
-//    public NavigableSet<byte[]> getColumnsToIncludes() {
+//    public NavigableSet<byte[]> getColumnsToInclude() {
 //        throw new UnsupportedOperationException();
 //    }
 
