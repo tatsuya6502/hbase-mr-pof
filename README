@@ -5,7 +5,7 @@ A proof of concept prototype to explore how we could make HBase full-table scan 
 
 See also: 
 "HFile Direct Read vs. HDFS SequenceFile", single chart of performance comparison 
-http://github.com/tatsuya6502/hbase-mr-pof/blob/master/docs/performance_comparison_0821_2010.pdf
+http://github.com/tatsuya6502/hbase-mr-pof/raw/master/docs/performance_comparison_0821_2010.pdf
 
 
 [ Prototypes ]
