@@ -107,7 +107,7 @@ Since this is just a set of working prototypes, there may be many limitations an
 Limitations: 
 
 - Can't handle split-regions
-- Don't prevent HBase to run minor and major compactions. You should run 
+- Don't prevent HBase to run minor and major compactions. 
 - Can't handle deleted columns, rows and column families
 - KeyValueHashSet can hold up to 4096 columns per a row, otherwise throws an IllegalStateException
 - KeyValueHashSet#getValueAs... methods throws UnsupportedOperationException under hash collision situation
