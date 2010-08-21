@@ -4,8 +4,8 @@ By Tatsuya Kawano < http://twitter.com/tatsuya6502 >
 A proof of concept prototype to explore how we could make HBase full-table scan to run faster especially from Map Reduce jobs.
 
 See also: 
-"HFile Direct Read vs. HDFS SequenceFile", single chart of performance comparison
-docs/performance_comparison_0821_2010.pdf 
+"HFile Direct Read vs. HDFS SequenceFile", single chart of performance comparison 
+http://github.com/tatsuya6502/hbase-mr-pof/blob/master/docs/performance_comparison_0821_2010.pdf
 
 
 [ Prototypes ]
