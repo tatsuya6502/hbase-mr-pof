@@ -1,0 +1,122 @@
+hbase-mr-pof (HBase + Map Reduce -- Proof of Concept Prototypes)
+By Tatsuya Kawano < http://twitter.com/tatsuya6502 >
+
+A proof of concept prototype to explore how we could make HBase full-table scan to run faster especially from Map Reduce jobs.
+
+See also: 
+"HFile Direct Read vs. HDFS SequenceFile", single chart of performance comparison
+docs/performance_comparison_0821_2010.pdf 
+
+
+[ Prototypes ]
+
+There are three versions of the prototypes:
+
+V1 (faster): 
+
+Client library that skips Region Server, but directly reads HFiles on HDFS. The row reconstruction part remains the same to HBase 0.89.20100726 client / server. It uses HBase 0.89's QueryMatcher, ColumnTracker, DeleteTracker, etc. It also uses unmodified Result objects so it will do System.arraycopy on the every fields of KeyValue when converting a KV to SplitKeyValue. 
+
+
+V2 (the fastest) : 
+
+V1 + the row reconstruction shortcuts + zero-copy operation. HFile format change required. 
+
+The row reconstruction part utilizes additional information (per KeyValue) stored in modified HFiles: 
+
+-- 1-bit flag to indicate that this KeyValue belongs to the same row to the previous KV. This helps the new HFile *row* scanner to put a row of KVs together without comparing the row IDs.
+
+-- 1-bit flag to indicate that this KV holds an older value of the same column to the previous KV. Used by the HFile row scanner to drop older versions of KVs without comparing column family, qualifier and timestamp of each KV.
+
+-- 12-bit (0 - 4096) hash code of column family + qualifier. Used by the new KeyValueHashSet to merge a row of KVs collected from multiple HFile row scanners. 
+
+KeyValueHashSet represents a row and is replacing Result object. It doesn't create SplitKeyValue and provides byte array to value conversion (getValueAsString, getValueAsLong, etc.) so it can avoid to create extra copies of the byte arrays.
+
+
+V3 (smaller HFiles): V2 + smaller HFiles by removing duplicate information in a series of KVs; removes row ID, column family name and qualifier from a KV when possible. Runs as fast as V2.
+
+
+V2's row reconstruction and zero-copy parts can be applied to Region Server to make regular HBase Get and Scan operations faster.
+
+
+[ Requirements ] 
+
+Requirements to build the project:
+-- Sun Java 6 JDK
+-- ant
+-- Scala 2.8.final <http://www.scala-lang.org/downloads>
+
+Requirements to run the project: 
+-- A running HBase 0.89.20100726 /  Hadoop 0.20.2 HDFS cluster
+-- hadoop-lzo installed on the cluster <http://github.com/kevinweil/hadoop-lzo>
+
+
+[ How to Build ]
+
+Install Sun Java 6 JDK, ant and Scala 2.8.final <http://www.scala-lang.org/downloads>
+
+$ export JAVA_HOME=path/to/java6/home/
+$ export SCALA_HOME=path/to/scala2.8/home/
+$ cd hbase-mr-pof
+$ ant test
+
+Note: There is no JUnit test case or Scala Specs specification yet, so this won't run any test cases but only build the entire project including performance test programs.
+
+
+[ How to Run ]
+
+This PoC prototype is not integrated into HBase. It doesn't modify any part of the HBase program, so you need manually convert HFiles into V2 and v3 format. 
+
+1. Generate the Test Tables (HFiles) and HDFS SequenceFiles 
+
+$ bin/load-test-data.sh <record-count. e.g. 200000>
+
+
+2. Copy HFiles to outside the hbase directory and convert them into V2 and V3 formats. 
+
+Wait until HBase cluster finishes minor compactions, then run
+
+$ bin/set-row-markers.sh
+
+
+3. Run performance tests
+
+# V1 
+$ bin/hfile-kv-scanner.sh <record-count>
+
+# V2
+$ bin/hfile-kvrow-scanner.sh <record-count>
+
+# V3
+$ bin/hfile-kvrow-scanner3.sh <record-count>
+
+# Regular scan via HBase Region Server
+$ bin/rs-result-scanner.sh <record-count>
+
+# HDFS SequenceFile 
+$ bin/hdfs-seqfile.sh <record-count>
+
+I ran each test twice, and recorded the results from the second run. Some parts of HFiles will be kept in Linux disk cache at the first run, then read from the disk cache at the second run. 
+
+For V1, V2 and V3 tests, you can try -cache.sh scripts that utilizes HBase's HFile LRUBlockCache. This is handy if you don't want to measure the time to read files, but check how fast the row reconstruction and zero-copy parts work. Make sure you have smaller record count to fit entire HFile blocks in the cache (watch out cache miss/hit counts.) 
+
+
+[ Limitations and Known Issues ]
+
+Since this is just a set of working prototypes, there may be many limitations and bugs. 
+
+Limitations: 
+
+- Can't handle split-regions
+- Don't prevent HBase to run minor and major compactions. You should run 
+- Can't handle deleted columns, rows and column families
+- KeyValueHashSet can hold up to 4096 columns per a row, otherwise throws an IllegalStateException
+- KeyValueHashSet#getValueAs... methods throws UnsupportedOperationException under hash collision situation
+
+
+Bugs: 
+
+- V1, V2 and V3 HFiles sometimes contain a bit fewer rows (Investigating)
+- V3 KeyValue#columnEquals(bytes[]) sometimes returns wrong answer (Investigating)
+
+
+###
