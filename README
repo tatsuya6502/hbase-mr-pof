@@ -40,7 +40,7 @@ V2's row reconstruction and zero-copy parts can be applied to Region Server to m
 
 [ Source Tour ]
 
-Source first you want first to read. 
+Source codes you definitely want to check are in the following files. 
 
 V1: 
 test/hfileinput/HFileKVScannerSpecs.scala (the main test program)
